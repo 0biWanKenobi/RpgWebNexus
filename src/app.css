@@ -56,7 +56,8 @@ h1 {
 
 .description,
 .status,
-.parse-status {
+.parse-status,
+.google-scope {
   margin: 16px 0 0;
   line-height: 1.55;
   color: rgba(246, 239, 230, 0.78);
@@ -65,8 +66,35 @@ h1 {
 .button-slot {
   display: flex;
   justify-content: center;
-  min-height: 44px;
   margin-top: 28px;
+}
+
+.google-button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 22px;
+  min-width: 280px;
+  background: linear-gradient(135deg, #f0b56f 0%, #d88a41 100%);
+  color: #1b1310;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    box-shadow 0.18s ease;
+  box-shadow: 0 18px 35px rgba(216, 138, 65, 0.28);
+}
+
+.google-button:hover:enabled {
+  transform: translateY(-1px);
+}
+
+.google-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .status {
@@ -76,4 +104,67 @@ h1 {
 .parse-status {
   font-size: 0.95rem;
   color: #f0b56f;
+}
+
+.google-scope {
+  font-size: 0.88rem;
+}
+
+.response-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 18px;
+  text-align: left;
+  background: rgba(10, 16, 24, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.response-title {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0b56f;
+}
+
+.token-row + .token-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.token-key {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(240, 181, 111, 0.92);
+}
+
+.token-value-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toggle-button {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f6efe6;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #f6efe6;
 }

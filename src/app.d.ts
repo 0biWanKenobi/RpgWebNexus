@@ -1,5 +1,8 @@
 declare global {
   interface ImportMetaEnv {
+    readonly VITE_GOOGLE_CLIENT_ID?: string
+    readonly VITE_GOOGLE_DRIVE_SCOPE?: string
+    readonly VITE_GOOGLE_REDIRECT_URI?: string
     readonly VITE_PARSE_APP_ID?: string
     readonly VITE_PARSE_JS_KEY?: string
     readonly VITE_PARSE_SERVER_URL?: string
@@ -13,15 +16,29 @@ declare global {
     Parse?: typeof import('parse').default
     google?: {
       accounts?: {
-        id?: {
-          initialize: (config: {
+        oauth2?: {
+          initCodeClient: (config: {
             client_id: string
-            callback: (response: unknown) => void
-          }) => void
-          renderButton: (
-            element: HTMLElement,
-            options: Record<string, string | number>
-          ) => void
+            scope: string
+            redirect_uri?: string
+            include_granted_scopes?: boolean
+            ux_mode?: 'popup' | 'redirect'
+            select_account?: boolean
+            state?: string
+            callback: (response: {
+              code?: string
+              scope?: string
+              state?: string
+              error?: string
+              error_description?: string
+              error_uri?: string
+            }) => void
+            error_callback?: (error: {
+              type: 'popup_failed_to_open' | 'popup_closed' | 'unknown'
+            }) => void
+          }) => {
+            requestCode: () => void
+          }
         }
       }
     }
