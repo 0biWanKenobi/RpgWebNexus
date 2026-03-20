@@ -9,7 +9,7 @@
   import LoginButton from "./components/LoginButton.svelte";
   import AuthStatus from "./components/AuthStatus.svelte";
 
-  let authStatus = $state("Waiting for Google Identity Services...");
+  let loginStatus = $state("");
   let parseStatus = $state("Checking Parse configuration...");
   const parseConfig = getParseConfig();
   let tokenResult: Record<string, string> | null = $state(null);
@@ -66,8 +66,8 @@
     </p>
     <p class="parse-status">{parseStatus}</p>
 
-    <LoginButton setAuthStatus={(v) => (authStatus = v)} />
-    <AuthStatus {tokenResult} onAuthStatusChange={(s) => (authStatus = s)} />
+    <LoginButton setAuthStatus={(v) => (loginStatus = v)} />
+    <AuthStatus {loginStatus} {tokenResult}/>
 
     {#if tokenResult}
       <TokenPanel {tokenResult} />

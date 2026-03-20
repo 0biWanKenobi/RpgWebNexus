@@ -1,9 +1,9 @@
 <script lang="ts">
     import { getGoogleAuthConfig, isGoogleAuthConfigured } from "../lib/google";
 
-    let { tokenResult, onAuthStatusChange }: {
+    let { loginStatus, tokenResult }: {
+        loginStatus: string,
         tokenResult: Record<string, string> | null,
-        onAuthStatusChange: (value: string) => void,
     } =
         $props();
 
@@ -21,14 +21,14 @@
             return "Google OAuth returned an error. Review the details below.";
         }
 
+        if(loginStatus!= ""){
+            return loginStatus
+        }
+
         return isGoogleAuthConfigured()
             ? `Ready to redirect Google OAuth to ${googleConfig.redirectUri}`
             : "Set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI to enable the Google auth code flow.";
     });
-
-    $effect(() => {
-        onAuthStatusChange(authStatus);
-    })
 </script>
 
 <p class="status">{authStatus}</p>
