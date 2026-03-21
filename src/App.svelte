@@ -1,17 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    getParseConfig,
-    initializeParse,
-    isParseConfigured,
-  } from "./lib/parse";
   import TokenPanel from "./components/TokenPanel.svelte";
   import LoginButton from "./components/LoginButton.svelte";
   import AuthStatus from "./components/AuthStatus.svelte";
 
   let loginStatus = $state("");
-  let parseStatus = $state("Checking Parse configuration...");
-  const parseConfig = getParseConfig();
   let tokenResult: Record<string, string> | null = $state(null);
 
   function readTokenResultFromUrl() {
@@ -42,13 +35,6 @@
 
   onMount(() => {
     tokenResult = readTokenResultFromUrl();
-    parseStatus = isParseConfigured()
-      ? `Parse ready for ${parseConfig.serverUrl}`
-      : "Set VITE_PARSE_APP_ID and VITE_PARSE_SERVER_URL to initialize Parse.";
-
-    if (isParseConfigured()) {
-      initializeParse();
-    }
   });
 </script>
 
@@ -62,12 +48,11 @@
     <h1>Request Google auth code</h1>
     <p class="description">
       This POC uses the Google OAuth redirect flow and sends the authorization
-      code to your local Hono callback endpoint first.
+      code to your configured Cloud Run callback endpoint first.
     </p>
-    <p class="parse-status">{parseStatus}</p>
 
     <LoginButton setAuthStatus={(v) => (loginStatus = v)} />
-    <AuthStatus {loginStatus} {tokenResult}/>
+    <AuthStatus {loginStatus} {tokenResult} />
 
     {#if tokenResult}
       <TokenPanel {tokenResult} />

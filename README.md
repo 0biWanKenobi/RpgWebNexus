@@ -2,14 +2,6 @@
 
 Minimal Svelte + Vite app for testing Google sign-in and Parse client setup.
 
-## Parse setup
-
-1. Copy `.env.example` to `.env`.
-2. Fill in `VITE_PARSE_APP_ID` and `VITE_PARSE_SERVER_URL`.
-3. Add `VITE_PARSE_JS_KEY` only if your Parse Server uses one.
-
-Do not put a Parse master key in this app. Browser clients should only use the app id,
-optional JavaScript key, and server URL.
 
 ## Scripts
 

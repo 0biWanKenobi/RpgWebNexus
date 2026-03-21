@@ -14,7 +14,7 @@
             tokenResult?.google_refresh_token ||
             tokenResult?.google_access_token
         ) {
-            return "Google tokens returned from the local callback endpoint.";
+            return "Google tokens returned from the configured callback endpoint.";
         }
 
         if (tokenResult?.google_token_error || tokenResult?.google_error) {

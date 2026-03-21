@@ -16,7 +16,7 @@
 
   function authorizeWithGoogle() {
     isAuthorizing = true;
-    setAuthStatus(`Redirecting to Google, then back to ${googleConfig.redirectUri}...`);
+    setAuthStatus(`Redirecting to Google via ${googleConfig.redirectUri}...`);
 
     try {
       redirectToGoogleAuthCode("rpg-web-nexus-drive-poc");
