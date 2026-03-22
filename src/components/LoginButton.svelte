@@ -18,8 +18,10 @@
     isAuthorizing = true;
     setAuthStatus(`Redirecting to Google via ${googleConfig.redirectUri}...`);
 
+    const google_state = `rpg-web-nexus-${crypto.randomUUID()}`;
+    sessionStorage.setItem("gas", google_state);
     try {
-      redirectToGoogleAuthCode("rpg-web-nexus-drive-poc");
+      redirectToGoogleAuthCode(google_state);
     } catch (error) {
       setAuthStatus(error instanceof Error ? error.message : "Google OAuth request failed.");
       isAuthorizing = false;
