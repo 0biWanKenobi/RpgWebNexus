@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { getGoogleAuthConfig, isGoogleAuthConfigured } from "../lib/google";
+    import { isGoogleAuthConfigured } from "../lib/google";
 
-    let { loginStatus, tokenResult }: {
-        loginStatus: string,
+    let { loginError, tokenResult }: {
+        loginError: string,
         tokenResult: Record<string, string> | null,
     } =
         $props();
-
-    const googleConfig = getGoogleAuthConfig();
 
     const authStatus = $derived.by(() => {
         if (
@@ -21,8 +19,8 @@
             return "Google OAuth returned an error. Review the details below.";
         }
 
-        if(loginStatus!= ""){
-            return loginStatus
+        if(loginError!= ""){
+            return loginError
         }
 
         return isGoogleAuthConfigured()

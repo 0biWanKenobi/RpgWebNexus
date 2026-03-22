@@ -2,8 +2,9 @@
   import {
     getGoogleAuthConfig,
     isGoogleAuthConfigured,
-    redirectToGoogleAuthCode,
+    loginWithGoogle,
   } from "../lib/google";
+    import type { TokenResult } from "../types/token-result";
 
   type SetAuthStatus = (value: string) => void;
 
@@ -11,19 +12,23 @@
 
   const googleConfig = getGoogleAuthConfig();
 
-  let { setAuthStatus }: { setAuthStatus: SetAuthStatus } = $props();
-
+  let { setAuthErrorStatus, handleAuthResult }: {
+     setAuthErrorStatus: SetAuthStatus,
+     handleAuthResult: (r: TokenResult) => void,
+  } = $props();
 
   function authorizeWithGoogle() {
     isAuthorizing = true;
-    setAuthStatus(`Redirecting to Google via ${googleConfig.redirectUri}...`);
+    setAuthErrorStatus(`Redirecting to Google via ${googleConfig.redirectUri}...`);
 
     const google_state = `rpg-web-nexus-${crypto.randomUUID()}`;
     sessionStorage.setItem("gas", google_state);
     try {
-      redirectToGoogleAuthCode(google_state);
+      loginWithGoogle(google_state, handleAuthResult);
     } catch (error) {
-      setAuthStatus(error instanceof Error ? error.message : "Google OAuth request failed.");
+      setAuthErrorStatus(error instanceof Error ? error.message : "Google OAuth request failed.");
+    }
+    finally {
       isAuthorizing = false;
     }
   }

@@ -3,56 +3,26 @@
   import TokenPanel from "./components/TokenPanel.svelte";
   import LoginButton from "./components/LoginButton.svelte";
   import AuthStatus from "./components/AuthStatus.svelte";
+  import type { TokenResult } from "./types/token-result";
 
-  let loginStatus = $state("");
-  
+  let loginError = $state("");
 
-
-  type TokenResult = {
-    google_access_token?: string | undefined;
-    google_expires_in?: string | undefined;
-    google_refresh_token?: string | undefined;
-    google_state: string;
-    google_token_error?: string | undefined;
-    google_token_error_description?: string | undefined;
-    google_token_error_uri?: string | undefined;
-    google_error?: string | undefined;
-    google_error_description?: string | undefined;
-    google_error_uri?: string | undefined;
-}
-
-type TokenDisplay = {tokenResult: TokenResult, verified: true } | {tokenResult: null, verified: false}
+type TokenDisplay = {tokenResult: TokenResult, verified: true } | {tokenResult: null, verified: false|null}
 
   let tokenResult: TokenResult | null = $state(null);
-  let tokenResultVerified = $state(false);
+  let tokenResultVerified = $state(null as boolean|null);
   let tokenDisplay  = $derived.by(() =>  ({tokenResult, verified: tokenResultVerified} as TokenDisplay))
 
-  function readTokenResultFromUrl(): TokenResult | null {
-    const url = new URL(window.location.href);
-    const searchParams = url.searchParams;
 
-    if (searchParams.size == 0) return  null;
-
-    return {
-      google_access_token: searchParams.get('google_access_token') || undefined,
-      google_expires_in: searchParams.get('google_expires_in') || undefined,
-      google_refresh_token:  searchParams.get('google_refresh_token') || undefined,
-      google_state:  searchParams.get('google_state') as string,
-      google_token_error:  searchParams.get('google_token_error') || undefined,
-      google_token_error_description:  searchParams.get('google_token_error_description') || undefined,
-      google_token_error_uri:  searchParams.get('google_token_error_uri') || undefined,
-      google_error:  searchParams.get('google_error') || undefined,
-      google_error_description:  searchParams.get('google_error_description') || undefined,
-      google_error_uri:  searchParams.get('google_error_uri') || undefined,
-    } as TokenResult
-
+  function handleAuthResult(result?: TokenResult) {
+    if (!!result) {
+        tokenResultVerified = sessionStorage.getItem('gas') == result.google_state;
+        tokenResult = result;
+    }
   }
 
   onMount(() => {
-    tokenResult = readTokenResultFromUrl();
-    if (!!tokenResult) {
-        tokenResultVerified = sessionStorage.getItem('gas') == tokenResult.google_state;
-    }
+    // do anything needed at page load
   });
 </script>
 
@@ -76,12 +46,12 @@ type TokenDisplay = {tokenResult: TokenResult, verified: true } | {tokenResult: 
       and RPG Master.
     </p>
 
-    <LoginButton setAuthStatus={(v) => (loginStatus = v)} />
-    <AuthStatus {loginStatus} {tokenResult} />
+    <LoginButton setAuthErrorStatus={(v) => (loginError = v)} {handleAuthResult} />
+    <AuthStatus loginError={loginError} {tokenResult} />
 
     {#if tokenDisplay.verified}
       <TokenPanel tokenResult={tokenDisplay.tokenResult} />
-    {:else}
+    {:else if tokenDisplay.verified === false}
       <p>WARNING: received response may have been hijacked!</p>
     {/if}
   </section>
