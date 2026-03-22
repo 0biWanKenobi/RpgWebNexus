@@ -19,7 +19,7 @@
 
   function authorizeWithGoogle() {
     isAuthorizing = true;
-    setAuthErrorStatus(`Redirecting to Google via ${googleConfig.redirectUri}...`);
+    setAuthErrorStatus(`Redirecting to Google Login...`);
 
     const google_state = `rpg-web-nexus-${crypto.randomUUID()}`;
     sessionStorage.setItem("gas", google_state);
