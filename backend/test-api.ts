@@ -9,6 +9,7 @@ const frontendReturnUrl = process.env.TEST_APP_RETURN_URL ?? 'http://127.0.0.1:5
 const frontendOrigin = new URL(frontendReturnUrl).origin
 const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID ?? ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? ''
+const googlePopupMessageSource = 'rpg-web-nexus-google-oauth'
 
 type GoogleTokenResponse = {
   access_token?: string
@@ -21,7 +22,6 @@ type GoogleTokenResponse = {
   error_description?: string
   error_uri?: string
 }
-
 
 function buildJsonHeaders(origin = frontendOrigin) {
   return {
@@ -36,11 +36,66 @@ function buildJsonHeaders(origin = frontendOrigin) {
 
 type JsonHeaders = ReturnType<typeof buildJsonHeaders>
 
-async function exchangeGoogleCode(code: string, redirectUri: string) {
+function serializeForInlineScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
+function buildPopupCallbackHtml(
+  body: {
+    code?: string
+    error?: string
+    errorDescription?: string
+    errorUri?: string
+    state?: string
+  },
+  origin: string
+) {
+  const payload = {
+    source: googlePopupMessageSource,
+    code: body.code,
+    state: body.state,
+    error: body.error,
+    error_description: body.errorDescription,
+    error_uri: body.errorUri,
+  }
+
+  const serializedPayload = serializeForInlineScript(payload)
+  const serializedOrigin = serializeForInlineScript(origin)
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Google login</title>
+  </head>
+  <body>
+    <p>Completing Google login...</p>
+    <script>
+      const payload = ${serializedPayload};
+      const targetOrigin = ${serializedOrigin};
+
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(payload, targetOrigin);
+      }
+
+      window.close();
+    </script>
+  </body>
+</html>`
+}
+
+async function exchangeGoogleCode(code: string, redirectUri: string, codeVerifier: string) {
   const body = new URLSearchParams({
     client_id: googleClientId,
     client_secret: googleClientSecret,
     code,
+    code_verifier: codeVerifier,
     grant_type: 'authorization_code',
     redirect_uri: redirectUri,
   })
@@ -68,73 +123,87 @@ app.options('/oauth/google/callback', (c) => {
   return c.body(null, 204, buildJsonHeaders(requestOrigin))
 })
 
+app.get('/oauth/google/callback', (c) => {
+  return c.html(
+    buildPopupCallbackHtml(
+      {
+        code: c.req.query('code'),
+        error: c.req.query('error'),
+        errorDescription: c.req.query('error_description'),
+        errorUri: c.req.query('error_uri'),
+        state: c.req.query('state'),
+      },
+      frontendOrigin
+    ),
+    200,
+    {
+      'cache-control': 'no-store',
+    }
+  )
+})
 
 type CheckResponse = { error: true; response: Response } | { error: false; response: undefined }
-type CheckOriginResponse = CheckResponse;
+type CheckOriginResponse = CheckResponse
 
-function checkOrigin(c: Context): CheckOriginResponse{
+function checkOrigin(c: Context): CheckOriginResponse {
   const requestOrigin = c.req.header('origin')
   const headers = buildJsonHeaders(requestOrigin ?? frontendOrigin)
 
-  if (requestOrigin == frontendOrigin) {
-    return { error: false, response: undefined}
+  if (requestOrigin === frontendOrigin) {
+    return { error: false, response: undefined }
   }
-  else{
-    const response = c.json(
-      {
-        google_error: 'invalid_origin',
-        google_error_description: `Origin ${requestOrigin ?? 'none'} not allowed.`,
-      },
-      403,
-      headers
-    )
-    return {error: true, response}
-  }
+
+  const response = c.json(
+    {
+      google_error: 'invalid_origin',
+      google_error_description: `Origin ${requestOrigin ?? 'none'} not allowed.`,
+    },
+    403,
+    headers
+  )
+
+  return { error: true, response }
 }
 
 type CheckErrorResponse = CheckResponse & {
   body: Awaited<ReturnType<HonoRequest['parseBody']>>
 }
 
-async function checkErrorAsync(c: Context, headers: JsonHeaders): Promise<CheckErrorResponse>{
-  const body = await c.req.parseBody();
+async function checkErrorAsync(c: Context, headers: JsonHeaders): Promise<CheckErrorResponse> {
+  const body = await c.req.parseBody()
   const state = typeof body.state === 'string' ? body.state : undefined
-  const error = typeof body.error === 'string' ? body.error : undefined  
+  const error = typeof body.error === 'string' ? body.error : undefined
 
-  if(!error) {
+  if (!error) {
     return {
       error: false,
       body,
-      response: undefined
+      response: undefined,
     }
   }
 
-  else {
-    const errorDescription = typeof body.error_description === 'string'
-      ? body.error_description 
-      : undefined
-    const errorUri = typeof body.error_uri === 'string' 
-      ? body.error_uri 
-      : undefined
-    const response = c.json(
-      {
-        google_error: error,
-        google_error_description: errorDescription,
-        google_error_uri: errorUri,
-        google_state: state,
-      },
-      200,
-      headers
-    );
-    return {error: true, body, response}
-  }
+  const errorDescription =
+    typeof body.error_description === 'string' ? body.error_description : undefined
+  const errorUri = typeof body.error_uri === 'string' ? body.error_uri : undefined
+  const response = c.json(
+    {
+      google_error: error,
+      google_error_description: errorDescription,
+      google_error_uri: errorUri,
+      google_state: state,
+    },
+    200,
+    headers
+  )
+
+  return { error: true, body, response }
 }
 
-
-function checkHeader(c: Context, headers: JsonHeaders): CheckResponse{
-  if(c.req.header('x-requested-with') == 'XmlHttpRequest') {
-    return {error: false, response: undefined}
+function checkHeader(c: Context, headers: JsonHeaders): CheckResponse {
+  if (c.req.header('x-requested-with') === 'XmlHttpRequest') {
+    return { error: false, response: undefined }
   }
+
   return {
     error: true,
     response: c.json(
@@ -144,61 +213,129 @@ function checkHeader(c: Context, headers: JsonHeaders): CheckResponse{
       },
       400,
       headers
-    )
+    ),
+  }
+}
+
+type CheckStateResponse = CheckResponse & {
+  state: string
+}
+
+function checkState(
+  c: Context,
+  state: string | File | undefined,
+  headers: JsonHeaders
+): CheckStateResponse {
+  if (typeof state === 'string') {
+    return {
+      error: false,
+      state,
+      response: undefined,
+    }
+  }
+
+  return {
+    error: true,
+    state: '',
+    response: c.json(
+      {
+        google_error: 'missing_state',
+        google_error_description: 'Google callback did not include an OAuth state value.',
+      },
+      400,
+      headers
+    ),
   }
 }
 
 type CheckCodeResponse = CheckResponse & {
-  code: string;
+  code: string
 }
 
-function checkSecurityCode(c: Context, code: string |File |undefined, state: string, headers: JsonHeaders): CheckCodeResponse {
-  if(!!code) return {
-    error: false,
-    code: code as string,
-    response: undefined
+function checkSecurityCode(
+  c: Context,
+  code: string | File | undefined,
+  state: string,
+  headers: JsonHeaders
+): CheckCodeResponse {
+  if (typeof code === 'string') {
+    return {
+      error: false,
+      code,
+      response: undefined,
+    }
   }
 
-  else {
-    const response = c.json(
+  return {
+    error: true,
+    code: '',
+    response: c.json(
       {
         google_error: 'missing_code',
         google_error_description: 'Google callback did not include an authorization code.',
-        google_state: state
+        google_state: state,
       },
       400,
       headers
-    );
+    ),
+  }
+}
+
+type CheckCodeVerifierResponse = CheckResponse & {
+  codeVerifier: string
+}
+
+function checkCodeVerifier(
+  c: Context,
+  codeVerifier: string | File | undefined,
+  state: string,
+  headers: JsonHeaders
+): CheckCodeVerifierResponse {
+  if (typeof codeVerifier === 'string') {
     return {
-      error: true,
-      code: '',
-      response
+      error: false,
+      codeVerifier,
+      response: undefined,
     }
+  }
+
+  return {
+    error: true,
+    codeVerifier: '',
+    response: c.json(
+      {
+        google_error: 'missing_code_verifier',
+        google_error_description: 'Google OAuth exchange did not include a PKCE code verifier.',
+        google_state: state,
+      },
+      400,
+      headers
+    ),
   }
 }
 
 function checkClientIdAndSecret(c: Context, state: string, headers: JsonHeaders): CheckResponse {
-  if (!!googleClientId &&  !!googleClientSecret) {
+  if (googleClientId && googleClientSecret) {
     return {
       error: false,
-      response: undefined
+      response: undefined,
     }
   }
-  else {
-    const response = c.json(
-      {
-        google_error: 'missing_server_oauth_config',
-        google_error_description:
-          'Set VITE_GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the test API environment.',
-        google_state: state,
-      },
-      500,
-      headers
-    );
-    return {
-      error: true,
-      response
-    }
+
+  const response = c.json(
+    {
+      google_error: 'missing_server_oauth_config',
+      google_error_description:
+        'Set VITE_GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the test API environment.',
+      google_state: state,
+    },
+    500,
+    headers
+  )
+
+  return {
+    error: true,
+    response,
   }
 }
 
@@ -206,35 +343,49 @@ app.post('/oauth/google/callback', async (c) => {
   const requestOrigin = c.req.header('origin')
   const headers = buildJsonHeaders(requestOrigin ?? frontendOrigin)
 
-  const originState = checkOrigin(c);
-
+  const originState = checkOrigin(c)
   if (originState.error) {
-    return originState.response;
+    return originState.response
   }
 
-  const requestWithState = checkHeader(c, headers);
-
+  const requestWithState = checkHeader(c, headers)
   if (requestWithState.error) {
     return requestWithState.response
   }
 
-  const bodyState = await checkErrorAsync(c, headers)  
+  const bodyState = await checkErrorAsync(c, headers)
   if (bodyState.error) {
-    return bodyState.response;
+    return bodyState.response
   }
-  
-  const state = bodyState.body.state as string;
-  const codeState = checkSecurityCode(c, bodyState.body.code, state, headers);
+
+  const stateCheck = checkState(c, bodyState.body.state, headers)
+  if (stateCheck.error) {
+    return stateCheck.response
+  }
+
+  const state = stateCheck.state
+  const codeState = checkSecurityCode(c, bodyState.body.code, state, headers)
   if (codeState.error) {
-    return codeState.response;
+    return codeState.response
   }
 
-  const idAndSecretState = checkClientIdAndSecret(c, state, headers);
+  const codeVerifierState = checkCodeVerifier(c, bodyState.body.code_verifier, state, headers)
+  if (codeVerifierState.error) {
+    return codeVerifierState.response
+  }
+
+  const idAndSecretState = checkClientIdAndSecret(c, state, headers)
   if (idAndSecretState.error) {
-    return idAndSecretState.response;
+    return idAndSecretState.response
   }
 
-  const tokens = await exchangeGoogleCode(codeState.code, frontendOrigin)
+  const redirectUrl = new URL(c.req.url)
+  redirectUrl.search = ''
+  const tokens = await exchangeGoogleCode(
+    codeState.code,
+    redirectUrl.toString(),
+    codeVerifierState.codeVerifier
+  )
 
   return c.json(
     {

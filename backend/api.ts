@@ -1,7 +1,10 @@
 type GoogleTokenResponse = {
   access_token?: string
   expires_in?: number
+  id_token?: string
   refresh_token?: string
+  scope?: string
+  token_type?: string
   error?: string
   error_description?: string
   error_uri?: string
@@ -10,13 +13,20 @@ type GoogleTokenResponse = {
 type JsonResponseBody = Record<string, string | undefined | boolean>
 type ParsedRequestBody = {
   code?: string
+  codeVerifier?: string
+  error?: string
+  errorDescription?: string
+  errorUri?: string
+  state?: string
+}
+type ParsedCallbackQuery = {
+  code?: string
   error?: string
   errorDescription?: string
   errorUri?: string
   state?: string
 }
 type CheckResponse = { error: true; status: number; body: JsonResponseBody } | { error: false }
-
 type CheckOriginResponse = CheckResponse & { origin: string }
 
 type CloudFunctionRequest = import('@google-cloud/functions-framework').Request
@@ -33,6 +43,7 @@ const frontendReturnUrl = process.env.FRONTEND_RETURN_URL
 const frontendEnvOrigin = frontendReturnUrl ? new URL(frontendReturnUrl).origin : undefined
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? ''
+const googlePopupMessageSource = 'rpg-web-nexus-google-oauth'
 
 function buildJsonHeaders(origin = frontendEnvOrigin ?? '*') {
   return {
@@ -55,12 +66,34 @@ function sendJson(
   res.status(status).json(body)
 }
 
+function sendPopupHtml(res: CloudFunctionResponse, status: number, html: string) {
+  res.set({
+    'cache-control': 'no-store',
+    'content-type': 'text/html; charset=utf-8',
+  })
+  res.status(status).send(html)
+}
+
+function readFirstString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    const [firstValue] = value
+    return typeof firstValue === 'string' ? firstValue : undefined
+  }
+
+  return undefined
+}
+
 function parseRequestBody(req: CloudFunctionRequest): ParsedRequestBody {
   const body =
     typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {}
 
   return {
     code: typeof body.code === 'string' ? body.code : undefined,
+    codeVerifier: typeof body.code_verifier === 'string' ? body.code_verifier : undefined,
     error: typeof body.error === 'string' ? body.error : undefined,
     errorDescription: typeof body.error_description === 'string' ? body.error_description : undefined,
     errorUri: typeof body.error_uri === 'string' ? body.error_uri : undefined,
@@ -68,6 +101,74 @@ function parseRequestBody(req: CloudFunctionRequest): ParsedRequestBody {
   }
 }
 
+function parseCallbackQuery(req: CloudFunctionRequest): ParsedCallbackQuery {
+  const query = typeof req.query === 'object' && req.query !== null ? req.query : {}
+
+  return {
+    code: readFirstString(query.code),
+    error: readFirstString(query.error),
+    errorDescription: readFirstString(query.error_description),
+    errorUri: readFirstString(query.error_uri),
+    state: readFirstString(query.state),
+  }
+}
+
+function getRequestPublicUrl(req: CloudFunctionRequest): string {
+  const protocol = readFirstString(req.headers['x-forwarded-proto']) ?? req.protocol ?? 'https'
+  const host = readFirstString(req.headers['x-forwarded-host']) ?? readFirstString(req.headers.host)
+  const requestPath = (req.originalUrl ?? req.url ?? '/').split('?')[0] || '/'
+
+  if (!host) {
+    throw new Error('Missing Host header.')
+  }
+
+  return `${protocol}://${host}${requestPath}`
+}
+
+function serializeForInlineScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
+function buildPopupCallbackHtml(body: ParsedCallbackQuery, origin: string): string {
+  const payload = {
+    source: googlePopupMessageSource,
+    code: body.code,
+    state: body.state,
+    error: body.error,
+    error_description: body.errorDescription,
+    error_uri: body.errorUri,
+  }
+
+  const serializedPayload = serializeForInlineScript(payload)
+  const serializedOrigin = serializeForInlineScript(origin)
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Google login</title>
+  </head>
+  <body>
+    <p>Completing Google login...</p>
+    <script>
+      const payload = ${serializedPayload};
+      const targetOrigin = ${serializedOrigin};
+
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(payload, targetOrigin);
+      }
+
+      window.close();
+    </script>
+  </body>
+</html>`
+}
 
 function checkMethod(req: CloudFunctionRequest): CheckResponse {
   const requestMethod = req.method ?? 'GET'
@@ -103,7 +204,9 @@ function checkEnvFrontendOrigin(): CheckOriginResponse {
 }
 
 function checkOrigin(req: CloudFunctionRequest): CheckResponse {
-  if (!!frontendEnvOrigin && req.headers.origin === frontendEnvOrigin) {
+  const requestOrigin = readFirstString(req.headers.origin)
+
+  if (frontendEnvOrigin && requestOrigin === frontendEnvOrigin) {
     return { error: false }
   }
 
@@ -112,13 +215,13 @@ function checkOrigin(req: CloudFunctionRequest): CheckResponse {
     status: 403,
     body: {
       google_error: 'invalid_origin',
-      google_error_description: `Origin ${(req.headers.origin as string | undefined) ?? 'none'} not allowed.`,
+      google_error_description: `Origin ${requestOrigin ?? 'none'} not allowed.`,
     },
   }
 }
 
 function checkHeader(req: CloudFunctionRequest): CheckResponse {
-  if (req.headers['x-requested-with'] === 'XmlHttpRequest') {
+  if (readFirstString(req.headers['x-requested-with']) === 'XmlHttpRequest') {
     return { error: false }
   }
 
@@ -149,6 +252,21 @@ function checkError(body: ParsedRequestBody): CheckResponse {
   }
 }
 
+function checkState(body: ParsedRequestBody): CheckResponse {
+  if (body.state) {
+    return { error: false }
+  }
+
+  return {
+    error: true,
+    status: 400,
+    body: {
+      google_error: 'missing_state',
+      google_error_description: 'Google callback did not include an OAuth state value.',
+    },
+  }
+}
+
 function checkCode(body: ParsedRequestBody): CheckResponse {
   if (body.code) {
     return { error: false }
@@ -160,6 +278,22 @@ function checkCode(body: ParsedRequestBody): CheckResponse {
     body: {
       google_error: 'missing_code',
       google_error_description: 'Google callback did not include an authorization code.',
+      google_state: body.state,
+    },
+  }
+}
+
+function checkCodeVerifier(body: ParsedRequestBody): CheckResponse {
+  if (body.codeVerifier) {
+    return { error: false }
+  }
+
+  return {
+    error: true,
+    status: 400,
+    body: {
+      google_error: 'missing_code_verifier',
+      google_error_description: 'Google OAuth exchange did not include a PKCE code verifier.',
       google_state: body.state,
     },
   }
@@ -182,11 +316,16 @@ function checkClientIdAndSecret(state?: string): CheckResponse {
   }
 }
 
-async function exchangeGoogleCode(code: string, redirectUri: string): Promise<GoogleTokenResponse> {
+async function exchangeGoogleCode(
+  code: string,
+  redirectUri: string,
+  codeVerifier: string
+): Promise<GoogleTokenResponse> {
   const body = new URLSearchParams({
     client_id: googleClientId,
     client_secret: googleClientSecret,
     code,
+    code_verifier: codeVerifier,
     grant_type: 'authorization_code',
     redirect_uri: redirectUri,
   })
@@ -204,7 +343,7 @@ async function exchangeGoogleCode(code: string, redirectUri: string): Promise<Go
 
 http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunctionResponse) => {
   const requestMethod = req.method ?? 'GET'
-  const requestOriginHeader = req.headers.origin;
+  const requestOriginHeader = readFirstString(req.headers.origin)
 
   if (requestMethod === 'OPTIONS') {
     res.set(buildJsonHeaders(requestOriginHeader))
@@ -212,15 +351,21 @@ http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunction
     return
   }
 
-  const methodState = checkMethod(req)
-  if (methodState.error) {
-    sendJson(res, methodState.status, methodState.body, requestOriginHeader)
-    return
-  }
-
   const frontendOriginState = checkEnvFrontendOrigin()
   if (frontendOriginState.error) {
     sendJson(res, frontendOriginState.status, frontendOriginState.body, requestOriginHeader)
+    return
+  }
+
+  if (requestMethod === 'GET') {
+    const popupQuery = parseCallbackQuery(req)
+    sendPopupHtml(res, 200, buildPopupCallbackHtml(popupQuery, frontendOriginState.origin))
+    return
+  }
+
+  const methodState = checkMethod(req)
+  if (methodState.error) {
+    sendJson(res, methodState.status, methodState.body, requestOriginHeader)
     return
   }
 
@@ -244,9 +389,21 @@ http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunction
     return
   }
 
+  const stateState = checkState(body)
+  if (stateState.error) {
+    sendJson(res, stateState.status, stateState.body, requestOriginHeader)
+    return
+  }
+
   const codeState = checkCode(body)
   if (codeState.error) {
     sendJson(res, codeState.status, codeState.body, requestOriginHeader)
+    return
+  }
+
+  const codeVerifierState = checkCodeVerifier(body)
+  if (codeVerifierState.error) {
+    sendJson(res, codeVerifierState.status, codeVerifierState.body, requestOriginHeader)
     return
   }
 
@@ -257,7 +414,11 @@ http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunction
   }
 
   try {
-    const tokens = await exchangeGoogleCode(body.code as string, frontendOriginState.origin)
+    const tokens = await exchangeGoogleCode(
+      body.code as string,
+      getRequestPublicUrl(req),
+      body.codeVerifier as string
+    )
 
     sendJson(
       res,
@@ -265,11 +426,14 @@ http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunction
       {
         google_access_token: tokens.access_token,
         google_expires_in: tokens.expires_in?.toString(),
+        google_id_token: tokens.id_token,
         google_refresh_token: tokens.refresh_token,
+        google_scope: tokens.scope,
         google_state: body.state,
         google_token_error: tokens.error,
         google_token_error_description: tokens.error_description,
         google_token_error_uri: tokens.error_uri,
+        google_token_type: tokens.token_type,
       },
       requestOriginHeader
     )
