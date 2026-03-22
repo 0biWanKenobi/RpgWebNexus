@@ -1,13 +1,26 @@
 {
-  "extends": "./tsconfig.node.json",
   "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
     "noEmit": false,
+    "skipLibCheck": true,
     "allowImportingTsExtensions": false,
     "module": "CommonJS",
+    "declaration": false,
+    "outDir": "./backend",
+
+    /* Bundler mode */
     "moduleResolution": "node",
     "moduleDetection": "legacy",
     "verbatimModuleSyntax": false,
-    "outDir": "./backend/"
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
   "include": ["backend/api.ts"],
   "exclude": []
