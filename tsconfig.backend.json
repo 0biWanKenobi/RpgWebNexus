@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "moduleDetection": "legacy",
+    "verbatimModuleSyntax": false,
+    "outDir": "./backend/"
+  },
+  "include": ["backend/api.ts"],
+  "exclude": []
+}

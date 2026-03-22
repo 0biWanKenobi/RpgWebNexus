@@ -8,9 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-    "test:api": "tsx backend/test-api.ts"
+    "test:api": "tsx backend/test-api.ts",
+    "build:cloudfn": "tsc -p tsconfig.backend.json"
   },
   "devDependencies": {
+    "@google-cloud/functions-framework": "^5.0.2",
     "@hono/node-server": "^1.19.11",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tsconfig/svelte": "^5.0.8",
