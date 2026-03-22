@@ -26,8 +26,8 @@
         }
 
         return isGoogleAuthConfigured()
-            ? `Ready to redirect Google OAuth to ${googleConfig.redirectUri}`
-            : "Set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI to enable the Google auth code flow.";
+            ? `Click the button above to login with Google.`
+            : "Something is wrong, contact the developer.";
     });
 </script>
 
