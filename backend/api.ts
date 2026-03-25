@@ -44,6 +44,7 @@ const frontendEnvOrigin = frontendReturnUrl ? new URL(frontendReturnUrl).origin 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? ''
 const googlePopupMessageSource = 'rpg-web-nexus-google-oauth'
+const redirectUri = process.env.GOOGLE_REDIRECT_URI ?? ''
 
 function buildJsonHeaders(origin = frontendEnvOrigin ?? '*') {
   return {
@@ -111,18 +112,6 @@ function parseCallbackQuery(req: CloudFunctionRequest): ParsedCallbackQuery {
     errorUri: readFirstString(query.error_uri),
     state: readFirstString(query.state),
   }
-}
-
-function getRequestPublicUrl(req: CloudFunctionRequest): string {
-  const protocol = readFirstString(req.headers['x-forwarded-proto']) ?? req.protocol ?? 'https'
-  const host = readFirstString(req.headers['x-forwarded-host']) ?? readFirstString(req.headers.host)
-  const requestPath = (req.originalUrl ?? req.url ?? '/').split('?')[0] || '/'
-
-  if (!host) {
-    throw new Error('Missing Host header.')
-  }
-
-  return `${protocol}://${host}${requestPath}`
 }
 
 function serializeForInlineScript(value: unknown): string {
@@ -318,7 +307,6 @@ function checkClientIdAndSecret(state?: string): CheckResponse {
 
 async function exchangeGoogleCode(
   code: string,
-  redirectUri: string,
   codeVerifier: string
 ): Promise<GoogleTokenResponse> {
   const body = new URLSearchParams({
@@ -416,7 +404,6 @@ http('googleOAuthCallback', async (req: CloudFunctionRequest, res: CloudFunction
   try {
     const tokens = await exchangeGoogleCode(
       body.code as string,
-      getRequestPublicUrl(req),
       body.codeVerifier as string
     )
 

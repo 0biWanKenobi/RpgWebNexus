@@ -9,6 +9,7 @@ const frontendReturnUrl = process.env.TEST_APP_RETURN_URL ?? 'http://127.0.0.1:5
 const frontendOrigin = new URL(frontendReturnUrl).origin
 const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID ?? ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? ''
+const redirectUri = process.env.VITE_GOOGLE_REDIRECT_URI ?? ''
 const googlePopupMessageSource = 'rpg-web-nexus-google-oauth'
 
 type GoogleTokenResponse = {
@@ -90,7 +91,7 @@ function buildPopupCallbackHtml(
 </html>`
 }
 
-async function exchangeGoogleCode(code: string, redirectUri: string, codeVerifier: string) {
+async function exchangeGoogleCode(code: string, codeVerifier: string) {
   const body = new URLSearchParams({
     client_id: googleClientId,
     client_secret: googleClientSecret,
@@ -343,6 +344,7 @@ app.post('/oauth/google/callback', async (c) => {
   const requestOrigin = c.req.header('origin')
   const headers = buildJsonHeaders(requestOrigin ?? frontendOrigin)
 
+
   const originState = checkOrigin(c)
   if (originState.error) {
     return originState.response
@@ -379,11 +381,8 @@ app.post('/oauth/google/callback', async (c) => {
     return idAndSecretState.response
   }
 
-  const redirectUrl = new URL(c.req.url)
-  redirectUrl.search = ''
   const tokens = await exchangeGoogleCode(
     codeState.code,
-    redirectUrl.toString(),
     codeVerifierState.codeVerifier
   )
 
