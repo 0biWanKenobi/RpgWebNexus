@@ -7,16 +7,20 @@
 
   let loginError = $state("");
 
-type TokenDisplay = {tokenResult: TokenResult, verified: true } | {tokenResult: null, verified: false|null}
+  type TokenDisplay =
+    | { tokenResult: TokenResult; verified: true }
+    | { tokenResult: null; verified: false | null };
 
   let tokenResult: TokenResult | null = $state(null);
-  let tokenResultVerified = $state(null as boolean|null);
-  let tokenDisplay  = $derived.by(() =>  ({tokenResult, verified: tokenResultVerified} as TokenDisplay))
-
+  let tokenResultVerified = $state(null as boolean | null);
+  let tokenDisplay = $derived.by(
+    () => ({ tokenResult, verified: tokenResultVerified }) as TokenDisplay,
+  );
 
   function handleAuthResult(result?: TokenResult) {
     if (!!result) {
-        tokenResultVerified = sessionStorage.getItem('gas') == result.google_state;
+      tokenResultVerified =
+        sessionStorage.getItem("gas") == result.google_state;
         tokenResult = result;
     }
   }
@@ -46,8 +50,11 @@ type TokenDisplay = {tokenResult: TokenResult, verified: true } | {tokenResult: 
       and RPG Master.
     </p>
 
-    <LoginButton setAuthErrorStatus={(v) => (loginError = v)} {handleAuthResult} />
-    <AuthStatus loginError={loginError} {tokenResult} />
+    <LoginButton
+      setAuthErrorStatus={(v) => (loginError = v)}
+      {handleAuthResult}
+    />
+    <AuthStatus {loginError} {tokenResult} />
 
     {#if tokenDisplay.verified}
       <TokenPanel tokenResult={tokenDisplay.tokenResult} />
