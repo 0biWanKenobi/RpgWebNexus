@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { Context, Hono, HonoRequest } from 'hono'
+import { type Context, Hono, type HonoRequest } from 'hono'
 
 const app = new Hono()
 

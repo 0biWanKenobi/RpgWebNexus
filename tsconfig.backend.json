@@ -11,6 +11,7 @@
 
     /* Bundler mode */
     "moduleResolution": "node",
+    "types": ["node"],
     "moduleDetection": "legacy",
     "verbatimModuleSyntax": false,
 
@@ -22,6 +23,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["backend/api.ts", "backend/**/test-api.ts"],
-  "exclude": []
+  "include": ["backend/api.ts", "backend/test-api.ts"],
+  "exclude": ["backend/test-api.ts"]
 }
