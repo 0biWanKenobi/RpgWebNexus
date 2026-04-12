@@ -58,7 +58,7 @@
 
     {#if tokenDisplay.verified}
       <TokenPanel tokenResult={tokenDisplay.tokenResult} />
-      <a href={`obsidian://rpg_nexus_configuration/action?setup_token&value=${tokenDisplay.tokenResult.google_access_token}`}>
+      <a href={`obsidian://rpg_nexus_configuration?setup_token&value=${tokenDisplay.tokenResult.google_access_token}`}>
         Connect Obsidian
       </a>
     {:else if tokenDisplay.verified === false}
