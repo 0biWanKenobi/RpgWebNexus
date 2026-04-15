@@ -11,7 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-backend/*.js
+*.js
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +25,5 @@ backend/*.js
 *.sw?
 
 .env
+.dev.vars
+.wrangler

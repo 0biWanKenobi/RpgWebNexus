@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "test:api": "tsx backend/test-api.ts",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc -p tsconfig.functions.json",
+    "test:api": "npx wrangler pages dev ./dist",
     "build:cloudfn": "tsc -p tsconfig.backend.json"
   },
   "devDependencies": {
