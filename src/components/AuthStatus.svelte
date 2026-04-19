@@ -10,7 +10,8 @@
     const authStatus = $derived.by(() => {
         if (
             tokenResult?.google_refresh_token ||
-            tokenResult?.google_access_token
+            tokenResult?.google_access_token ||
+            tokenResult?.google_encrypted_payload
         ) {
             return "Google tokens returned from the configured callback endpoint.";
         }

@@ -18,6 +18,8 @@ export type ParsedRequestBody = {
     errorDescription?: string
     errorUri?: string
     state?: string
+    setupId?: string
+    setupPassword?: string
 }
 export type ParsedCallbackQuery = {
     code?: string

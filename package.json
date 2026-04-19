@@ -21,5 +21,8 @@
     "svelte-check": "^4.4.6",
     "typescript": "^6.0.3",
     "vite": "^8.0.1"
+  },
+  "dependencies": {
+    "rpg_shared": "file:.yalc/rpg_shared"
   }
 }

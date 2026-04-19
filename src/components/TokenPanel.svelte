@@ -3,7 +3,7 @@
     let revealedKeys = new Set<string>();
 
     function isSensitiveTokenField(key: string) {
-        return key.includes("token");
+        return key.includes("token") || key.includes("payload");
     }
 
     function maskValue(value: string) {

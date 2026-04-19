@@ -135,6 +135,24 @@ export function checkCodeVerifier(body: ParsedRequestBody): CheckResponseEx {
     })
 }
 
+export function checkSetupEncryption(body: ParsedRequestBody): CheckResponseEx {
+
+    if (!!body.setupId === !!body.setupPassword) {
+        return { error: false } as CheckResponseEx
+    }
+
+    return toJsonable({
+        error: true,
+        status: 400,
+        body: {
+            google_error: 'invalid_setup_encryption_context',
+            google_error_description:
+                'Expected both setup_id and setup_password when using encrypted Obsidian handoff.',
+            google_state: body.state,
+        },
+    })
+}
+
 export function checkClientIdAndSecret(env: Env, state?: string): CheckResponseEx {
     if (env.GOOGLE_CLIENT_ID?.trim() && env.GOOGLE_CLIENT_SECRET?.trim()) {
         return { error: false } as CheckResponseEx

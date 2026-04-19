@@ -1,5 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import {
+    buildObsidianGoogleConnectUrl,
+    consumeGoogleDriveSetupContextFromUrl,
+    removeGoogleDriveSetupContextFromUrl,
+  } from "rpg_shared/sync/googleDriveTokenCrypto";
+  import type { GoogleDriveSetupContext } from "rpg_shared/sync/googleDriveTokenCrypto";
   import TokenPanel from "./components/TokenPanel.svelte";
   import LoginButton from "./components/LoginButton.svelte";
   import AuthStatus from "./components/AuthStatus.svelte";
@@ -13,20 +19,38 @@
 
   let tokenResult: TokenResult | null = $state(null);
   let tokenResultVerified = $state(null as boolean | null);
+  let encryptionContext = $state<GoogleDriveSetupContext | null>(null);
   let tokenDisplay = $derived.by(
     () => ({ tokenResult, verified: tokenResultVerified }) as TokenDisplay,
   );
+  let obsidianConnectUrl = $derived.by(() =>
+    tokenDisplay.verified &&
+    tokenDisplay.tokenResult.google_setup_id &&
+    tokenDisplay.tokenResult.google_encrypted_payload
+      ? buildObsidianGoogleConnectUrl(
+          tokenDisplay.tokenResult.google_setup_id,
+          tokenDisplay.tokenResult.google_encrypted_payload,
+        )
+      : null,
+  );
 
   function handleAuthResult(result?: TokenResult) {
-    if (!!result) {
-      tokenResultVerified =
-        sessionStorage.getItem("gas") == result.google_state;
-        tokenResult = result;
+    if (result) {
+      tokenResultVerified = sessionStorage.getItem("gas") == result.google_state;
+      tokenResult = result;
     }
   }
 
   onMount(() => {
-    // do anything needed at page load
+    encryptionContext = consumeGoogleDriveSetupContextFromUrl(window.location.href);
+
+    if (encryptionContext) {
+      window.history.replaceState(
+        {},
+        document.title,
+        removeGoogleDriveSetupContextFromUrl(window.location.href),
+      );
+    }
   });
 </script>
 
@@ -51,6 +75,7 @@
     </p>
 
     <LoginButton
+      {encryptionContext}
       setAuthErrorStatus={(v) => (loginError = v)}
       {handleAuthResult}
     />
@@ -58,9 +83,11 @@
 
     {#if tokenDisplay.verified}
       <TokenPanel tokenResult={tokenDisplay.tokenResult} />
-      <a href={`obsidian://rpg_nexus_configuration?setup_token&value=${tokenDisplay.tokenResult.google_access_token}`}>
-        Connect Obsidian
-      </a>
+      {#if obsidianConnectUrl}
+        <a href={obsidianConnectUrl}>
+          Connect Obsidian
+        </a>
+      {/if}
     {:else if tokenDisplay.verified === false}
       <p>WARNING: received response may have been hijacked!</p>
     {/if}

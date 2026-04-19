@@ -1,4 +1,5 @@
 import type { TokenResult } from '../types/token-result'
+import type { GoogleDriveSetupContext } from 'rpg_shared/sync/googleDriveTokenCrypto'
 
 type GooglePopupResponse = {
   source: string
@@ -192,7 +193,8 @@ function waitForGooglePopupMessage(expectedOrigin: string, popup: Window): Promi
 async function exchangeGoogleCode(
   state: string,
   popupResponse: GooglePopupResponse,
-  codeVerifier: string
+  codeVerifier: string,
+  encryptionContext?: GoogleDriveSetupContext | null,
 ): Promise<TokenResult> {
   const config = getGoogleAuthConfig()
 
@@ -206,6 +208,9 @@ async function exchangeGoogleCode(
       payload.set('error_description', popupResponse.error_description)
     popupResponse.error_uri && payload.set('error_uri', popupResponse.error_uri)
     payload.set('code_verifier', codeVerifier)
+    encryptionContext?.setupId && payload.set('setup_id', encryptionContext.setupId)
+    encryptionContext?.setupKey &&
+      payload.set('setup_password', encryptionContext.setupKey)
 
     const exchangeResponse = await fetch(config.redirectUri, {
       method: 'POST',
@@ -244,7 +249,10 @@ async function exchangeGoogleCode(
   }
 }
 
-export async function loginWithGoogle(state: string): Promise<TokenResult> {
+export async function loginWithGoogle(
+  state: string,
+  encryptionContext?: GoogleDriveSetupContext | null,
+): Promise<TokenResult> {
   const config = getGoogleAuthConfig()
 
   if (!config.clientId) {
@@ -292,7 +300,12 @@ export async function loginWithGoogle(state: string): Promise<TokenResult> {
       )
     }
 
-    return await exchangeGoogleCode(state, popupResponse, storedCodeVerifier)
+    return await exchangeGoogleCode(
+      state,
+      popupResponse,
+      storedCodeVerifier,
+      encryptionContext,
+    )
   } catch (error) {
     sessionStorage.removeItem(pkceStorageKey)
     throw error

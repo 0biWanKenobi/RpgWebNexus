@@ -1,6 +1,13 @@
 import { env } from "cloudflare:workers";
 import { ParsedRequestBody } from "./oauthTypes";
-import { checkError, checkState, checkCode, checkCodeVerifier, checkClientIdAndSecret } from "./requestChecks";
+import {
+    checkError,
+    checkState,
+    checkCode,
+    checkCodeVerifier,
+    checkClientIdAndSecret,
+    checkSetupEncryption,
+} from "./requestChecks";
 
 export function validateRequestBody(body: ParsedRequestBody, headers: HeadersInit): Response | undefined {
     const errorState = checkError(body)
@@ -21,6 +28,11 @@ export function validateRequestBody(body: ParsedRequestBody, headers: HeadersIni
     const codeVerifierState = checkCodeVerifier(body)
     if (codeVerifierState.error) {
         return codeVerifierState.toJson(headers)
+    }
+
+    const setupEncryptionState = checkSetupEncryption(body)
+    if (setupEncryptionState.error) {
+        return setupEncryptionState.toJson(headers)
     }
 
     const clientIdAndSecretState = checkClientIdAndSecret(env, body.state)

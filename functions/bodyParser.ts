@@ -10,6 +10,8 @@ export async function parseRequestBody(request: Request): Promise<ParsedRequestB
         errorDescription: readFormString(formData, 'error_description'),
         errorUri: readFormString(formData, 'error_uri'),
         state: readFormString(formData, 'state'),
+        setupId: readFormString(formData, 'setup_id'),
+        setupPassword: readFormString(formData, 'setup_password'),
     }
 }
 

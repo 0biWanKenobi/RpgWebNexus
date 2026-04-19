@@ -2,6 +2,7 @@ import { parseRequestBody } from './bodyParser'
 import { validateRequestBody } from './bodyValidator'
 import { buildJsonHeaders } from './headersBuilder'
 import type { GoogleTokenResponse } from './oauthTypes'
+import { encryptGoogleDriveTokenSet } from 'rpg_shared/sync/googleDriveTokenCrypto'
 import { validateRequest } from './requestValidator'
 
 async function exchangeGoogleCode(
@@ -46,19 +47,53 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
     try {
         const tokens = await exchangeGoogleCode(env, code, codeVerifier)
+        const expiresAt = Date.now() + ((tokens.expires_in ?? 0) * 1000)
+
+        const baseResponse = {
+            google_expires_in: tokens.expires_in?.toString(),
+            google_scope: tokens.scope,
+            google_state: body.state,
+            google_token_error: tokens.error,
+            google_token_error_description: tokens.error_description,
+            google_token_error_uri: tokens.error_uri,
+            google_token_type: tokens.token_type,
+        }
+
+        if (
+            body.setupId &&
+            body.setupPassword &&
+            tokens.access_token &&
+            !tokens.error
+        ) {
+            const encryptedPayload = await encryptGoogleDriveTokenSet(
+                body.setupPassword,
+                {
+                    accessToken: tokens.access_token,
+                    refreshToken: tokens.refresh_token,
+                    tokenType: tokens.token_type ?? '',
+                    scope: tokens.scope ?? '',
+                    expiresAt,
+                },
+            )
+
+            return Response.json(
+                {
+                    ...baseResponse,
+                    google_encrypted_payload: encryptedPayload,
+                    google_setup_id: body.setupId,
+                },
+                {
+                    status: 200,
+                    headers,
+                }
+            )
+        }
 
         return Response.json(
             {
+                ...baseResponse,
                 google_access_token: tokens.access_token,
-                google_expires_in: tokens.expires_in?.toString(),
-                google_id_token: tokens.id_token,
                 google_refresh_token: tokens.refresh_token,
-                google_scope: tokens.scope,
-                google_state: body.state,
-                google_token_error: tokens.error,
-                google_token_error_description: tokens.error_description,
-                google_token_error_uri: tokens.error_uri,
-                google_token_type: tokens.token_type,
             },
             {
                 status: 200,
