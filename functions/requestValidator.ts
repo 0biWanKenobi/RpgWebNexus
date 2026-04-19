@@ -52,7 +52,7 @@ export function validateRequest(request: Request, env: Env): Response | undefine
     }
 
     const originStatus = checkOrigin(request, frontendOrigin)
-    if (originStatus) {
+    if (originStatus.error) {
         return originStatus.toJson(headers)
     }
 
