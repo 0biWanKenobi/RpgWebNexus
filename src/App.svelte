@@ -4,7 +4,7 @@
     buildObsidianGoogleConnectUrl,
     consumeGoogleDriveSetupContextFromUrl,
     removeGoogleDriveSetupContextFromUrl,
-  } from "rpg_shared/sync/googleDriveTokenCrypto";
+  } from "./lib/urlManipulation";
   import type { GoogleDriveSetupContext } from "rpg_shared/sync/googleDriveTokenCrypto";
   import LoginButton from "./components/LoginButton.svelte";
   import ConnectButton from "./components/ConnectButton.svelte";
