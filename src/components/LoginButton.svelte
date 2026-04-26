@@ -2,6 +2,7 @@
   import { isGoogleAuthConfigured, loginWithGoogle } from "../lib/google";
   import type { GoogleDriveSetupContext } from "rpg_shared/sync/googleDriveTokenCrypto";
   import type { TokenResult } from "../types/token-result";
+  import ActionButton from "./ActionButton.svelte";
 
   type SetAuthStatus = (value: string) => void;
 
@@ -31,13 +32,9 @@
   }
 </script>
 
-<div class="button-slot">
-  <button
-    class="google-button"
-    type="button"
+<ActionButton
     disabled={!isGoogleAuthConfigured() || isAuthorizing}
     onclick={authorizeWithGoogle}
   >
     {isAuthorizing ? "Waiting for Google..." : "Continue with Google"}
-  </button>
-</div>
+</ActionButton>

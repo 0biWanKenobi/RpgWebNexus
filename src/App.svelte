@@ -6,8 +6,8 @@
     removeGoogleDriveSetupContextFromUrl,
   } from "rpg_shared/sync/googleDriveTokenCrypto";
   import type { GoogleDriveSetupContext } from "rpg_shared/sync/googleDriveTokenCrypto";
-  import TokenPanel from "./components/TokenPanel.svelte";
   import LoginButton from "./components/LoginButton.svelte";
+  import ConnectButton from "./components/ConnectButton.svelte";
   import AuthStatus from "./components/AuthStatus.svelte";
   import type { TokenResult } from "./types/token-result";
 
@@ -20,10 +20,10 @@
   let tokenResult: TokenResult | null = $state(null);
   let tokenResultVerified = $state(null as boolean | null);
   let encryptionContext = $state<GoogleDriveSetupContext | null>(null);
-  let tokenDisplay = $derived.by(
+  const tokenDisplay = $derived.by(
     () => ({ tokenResult, verified: tokenResultVerified }) as TokenDisplay,
   );
-  let obsidianConnectUrl = $derived.by(() =>
+  const obsidianConnectUrl = $derived.by(() =>
     tokenDisplay.verified &&
     tokenDisplay.tokenResult.google_setup_id &&
     tokenDisplay.tokenResult.google_encrypted_payload
@@ -74,20 +74,16 @@
       and RPG Master.
     </p>
 
-    <LoginButton
-      {encryptionContext}
-      setAuthErrorStatus={(v) => (loginError = v)}
-      {handleAuthResult}
-    />
-    <AuthStatus {loginError} {tokenResult} />
-
-    {#if tokenDisplay.verified}
-      <TokenPanel tokenResult={tokenDisplay.tokenResult} />
-      {#if obsidianConnectUrl}
-        <a href={obsidianConnectUrl}>
-          Connect Obsidian
-        </a>
-      {/if}
+    {#if tokenDisplay.verified === null}
+      <LoginButton
+        {encryptionContext}
+        setAuthErrorStatus={(v) => (loginError = v)}
+        {handleAuthResult}
+      />
+      <AuthStatus {loginError} {tokenResult} />
+    {:else if tokenDisplay.verified}
+      <ConnectButton obsidianUrl={obsidianConnectUrl}>        
+      </ConnectButton>
     {:else if tokenDisplay.verified === false}
       <p>WARNING: received response may have been hijacked!</p>
     {/if}
