@@ -1,3 +1,4 @@
+import { sc_digest, sc_randValues } from 'rpg_shared/crypto'
 import type { TokenResult } from '../types/token-result'
 import type { GoogleDriveSetupContext } from 'rpg_shared/sync/googleDriveTokenCrypto'
 
@@ -69,13 +70,13 @@ function base64UrlEncode(input: ArrayBuffer | Uint8Array): string {
 
 function createCodeVerifier(): string {
   const randomBytes = new Uint8Array(32)
-  crypto.getRandomValues(randomBytes)
+  sc_randValues(randomBytes)
   return base64UrlEncode(randomBytes)
 }
 
 async function createCodeChallenge(codeVerifier: string): Promise<string> {
   const codeVerifierBytes = new TextEncoder().encode(codeVerifier)
-  const digest = await crypto.subtle.digest('SHA-256', codeVerifierBytes)
+  const digest = await sc_digest('SHA-256', codeVerifierBytes)
   const codeChallenge = base64UrlEncode(digest)
 
   return codeChallenge
