@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:dev": "vite build --mode=development",
+    "build:dev": "vite build --watch --mode=development",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc -p tsconfig.functions.json",
     "test:api": "npx wrangler pages dev ./dist --ip 127.0.0.1 --port 5173 --inspector-port 9229",
