@@ -10,13 +10,17 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc -p tsconfig.functions.json",
     "test:api": "npx wrangler pages dev ./dist --ip 127.0.0.1 --port 5173 --inspector-port 9229",
-    "build:cloudfn": "tsc -p tsconfig.backend.json"
+    "build:cloudfn": "tsc -p tsconfig.backend.json",
+    "yalc:add:shared": "run-os",
+    "yalc:add:shared:win32": "yalc add rpg_shared",
+    "yalc:add:shared:linux:darwin": "${YALC_BIN:-$HOME/.local/bin/yalc} add rpg_shared"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tsconfig/svelte": "^5.0.8",
     "@types/google.accounts": "^0.0.18",
     "@types/node": "^24.12.0",
+    "run-script-os": "^1.1.6",
     "svelte": "^5.55.4",
     "svelte-check": "^4.4.6",
     "typescript": "^6.0.3",
