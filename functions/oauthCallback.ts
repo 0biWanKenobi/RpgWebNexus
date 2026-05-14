@@ -2,7 +2,7 @@ import { parseRequestBody } from './bodyParser'
 import { validateRequestBody } from './bodyValidator'
 import { buildJsonHeaders } from './headersBuilder'
 import type { GoogleTokenResponse } from './oauthTypes'
-import { encryptGoogleDriveTokenSet } from 'rpg_shared/sync/googleDriveTokenCrypto'
+import { encryptObjectToBase64 } from 'rpg_shared/sync/googleDriveTokenCrypto'
 import { validateRequest } from './requestValidator'
 
 async function exchangeGoogleCode(
@@ -65,7 +65,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
             tokens.access_token &&
             !tokens.error
         ) {
-            const encryptedPayload = await encryptGoogleDriveTokenSet(
+            const encryptedPayload = await encryptObjectToBase64(
                 body.setupPassword,
                 {
                     accessToken: tokens.access_token,
