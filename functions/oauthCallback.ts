@@ -2,7 +2,7 @@ import { parseRequestBody } from './bodyParser'
 import { validateRequestBody } from './bodyValidator'
 import { buildJsonHeaders } from './headersBuilder'
 import type { GoogleTokenResponse } from './oauthTypes'
-import { encryptObjectToBase64 } from 'rpg_shared/sync/googleDriveTokenCrypto'
+import { encryptObjectToBase64 } from 'rpg_shared/sync'
 import { validateRequest } from './requestValidator'
 
 async function exchangeGoogleCode(
