@@ -51,7 +51,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return Response.json({
         success: !tokens.error,
         error: tokens.error,
-        accessToken: tokens.access_token,
+        access_token: tokens.access_token,
         expiresAt
     }, {
         headers
