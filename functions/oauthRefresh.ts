@@ -1,3 +1,4 @@
+import { buildJsonHeaders } from "./headersBuilder"
 import { GoogleTokenResponse } from "./oauthTypes"
 
 async function exchangeGoogleCode(
@@ -25,11 +26,22 @@ async function exchangeGoogleCode(
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
 
+    const requestOriginHeader = request.headers.get('origin') ?? '*'
+    const headers = buildJsonHeaders(requestOriginHeader);
+
+    if (request.method == 'OPTIONS') {
+        return Response.json({}, {
+            headers
+        })
+    }
+
     const params: Record<string, string> = await request.json()
     if (!("refresh_token" in params)) {
         return Response.json({
             success: false,
             error: "Missing refresh token"
+        }, {
+            headers
         })
     }
 
@@ -41,5 +53,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         error: tokens.error,
         accessToken: tokens.access_token,
         expiresAt
+    }, {
+        headers
     })
 }
