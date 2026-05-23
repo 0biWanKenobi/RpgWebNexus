@@ -116,7 +116,7 @@ function buildGoogleAuthorizeUrl(state: string, codeChallenge: string): string {
 
 function openGooglePopup(url: string): Window {
 
-const left = Math.max(window.screenX + (window.outerWidth - GOOGLE_POPUP_WIDTH) / 2, 0)
+  const left = Math.max(window.screenX + (window.outerWidth - GOOGLE_POPUP_WIDTH) / 2, 0)
   const top = Math.max(window.screenY + (window.outerHeight - GOOGLE_POPUP_HEIGHT) / 2, 0)
 
   const popupFeatures = [
