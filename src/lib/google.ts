@@ -25,7 +25,7 @@ const GOOGLE_POPUP_HEIGHT = 720
 const GOOGLE_POPUP_POLL_INTERVAL_MS = 500
 const GOOGLE_POPUP_TIMEOUT_MS = 5 * 60 * 1000
 
-export function getGoogleAuthConfig() {
+function getGoogleAuthConfig() {
   return {
     clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? '',
     scope:

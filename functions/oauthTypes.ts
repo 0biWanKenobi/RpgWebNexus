@@ -10,7 +10,7 @@ export type GoogleTokenResponse = {
     error_uri?: string
 }
 
-export type JsonResponseBody = Record<string, string | undefined | boolean>
+type JsonResponseBody = Record<string, string | undefined | boolean>
 export type ParsedRequestBody = {
     code?: string
     codeVerifier?: string
