@@ -2,5 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "rpg-web-nexus",
   "compatibility_date": "2026-04-15",
-  "pages_build_output_dir": "./dist"
+  "pages_build_output_dir": "./dist",
+  "vars": {
+    "SKIP_DEPENDENCY_INSTALL": "true"
+  }
 }
