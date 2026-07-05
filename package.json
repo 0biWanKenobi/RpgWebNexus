@@ -12,7 +12,7 @@
     "check:node": "tsc --noEmit -p tsconfig.node.json",
     "check:fn": "tsc --noEmit --incremental false --composite false -p tsconfig.functions.json",
     "check": "npm run check:app && npm run check:node && npm run check:fn",
-    "test:api": "npx wrangler pages dev ./dist --ip 127.0.0.1 --port 5173 --inspector-port 9229",
+    "test:api": "wrangler pages dev ./dist --ip 127.0.0.1 --port 5173 --inspector-port 9229",
     "build:cloudfn": "tsc -p tsconfig.backend.json",
     "yalc:add:shared": "run-os",
     "yalc:add:shared:win32": "yalc add rpg_shared",
@@ -27,7 +27,8 @@
     "svelte": "^5.55.4",
     "svelte-check": "^4.4.6",
     "typescript": "^6.0.3",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "wrangler": "^4.107.0"
   },
   "dependencies": {
     "rpg_shared": "file:.yalc/rpg_shared"
