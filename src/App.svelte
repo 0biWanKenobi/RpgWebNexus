@@ -4,12 +4,12 @@
     buildObsidianGoogleConnectUrl,
     consumeGoogleDriveSetupContextFromUrl,
     removeGoogleDriveSetupContextFromUrl,
-  } from "./lib/urlManipulation";
+  } from "$lib/urlManipulation";
   import type { GoogleDriveSetupContext } from "rpg_shared/sync/googleDriveTokenCrypto";
-  import LoginButton from "./components/LoginButton.svelte";
-  import ConnectButton from "./components/ConnectButton.svelte";
-  import AuthStatus from "./components/AuthStatus.svelte";
-  import type { TokenResult } from "./types/token-result";
+  import LoginButton from "$components/LoginButton.svelte";
+  import ConnectButton from "$components/ConnectButton.svelte";
+  import AuthStatus from "$components/AuthStatus.svelte";
+  import type { TokenResult } from "$types/token-result";
 
   let loginError = $state("");
 
