@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": [
+    "-lintignore"
+  ],
+  "entry": [
+    "src/main.{js,ts,tsx}",
+    ".router/router.ts",
+    "functions/oauthRefresh.ts",
+    "functions/oauthCallback.ts"
+  ],
+  "ignoreBinaries": ["yalc", "eslint", "wrangler", "run-os"],
+  "ignoreDependencies": ["@types/*", "run-script-os", "cloudflare"],
+  "ignoreFiles": ["**/*.d.ts"]
+}
