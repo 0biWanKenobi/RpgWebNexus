@@ -30,3 +30,4 @@ dist-ssr
 
 .yalc
 yalc.lock
+.cf-pages-cache

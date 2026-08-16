@@ -11,5 +11,5 @@
   ],
   "ignoreBinaries": ["yalc", "eslint", "wrangler", "run-os"],
   "ignoreDependencies": ["@types/*", "run-script-os", "cloudflare"],
-  "ignoreFiles": ["**/*.d.ts"]
+  "ignoreFiles": ["**/*.d.ts", "scripts/prepare-shared.mjs"]
 }

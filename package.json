@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --watch --mode=development",
-    "cloudflare:publish": "sh ./scripts/pages-build.sh",
+    "cloudflare:publish": "node ./scripts/prepare-shared.mjs && npm ci --progress=false && npm run build",
     "preview": "vite preview",
     "check:app": "svelte-check --tsconfig ./tsconfig.app.json",
     "check:node": "tsc --noEmit -p tsconfig.node.json",
