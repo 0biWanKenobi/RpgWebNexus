@@ -5,11 +5,23 @@
   "pages_build_output_dir": "./dist",
   "vars": {
     "SKIP_DEPENDENCY_INSTALL": "true",
-    "FRONTEND_RETURN_URL":"https://rpgwebnexus.pages.dev/",
+    "FRONTEND_RETURN_URL":"http://127.0.0.1:5173/",
     "GOOGLE_CLIENT_ID":"1096322555000-lq9ri5tbhn3f4uvv5d8dues6smtnftdd.apps.googleusercontent.com",
-    "GOOGLE_REDIRECT_URI":"https://rpgwebnexus.pages.dev/oauthCallback",
+    "GOOGLE_REDIRECT_URI":"hhttp://127.0.0.1:5173/oauthCallback",
     "VITE_GOOGLE_CLIENT_ID":"1096322555000-lq9ri5tbhn3f4uvv5d8dues6smtnftdd.apps.googleusercontent.com",
     "VITE_GOOGLE_DRIVE_SCOPE":"https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
-    "VITE_GOOGLE_REDIRECT_URI":"https://rpgwebnexus.pages.dev/oauthCallback"
+    "VITE_GOOGLE_REDIRECT_URI":"hhttp://127.0.0.1:5173/oauthCallback"
+  }, 
+  "env": {
+    "production": {
+      "vars": {
+        "FRONTEND_RETURN_URL":"https://rpgwebnexus.pages.dev/",
+        "GOOGLE_CLIENT_ID":"1096322555000-lq9ri5tbhn3f4uvv5d8dues6smtnftdd.apps.googleusercontent.com",
+        "GOOGLE_REDIRECT_URI":"https://rpgwebnexus.pages.dev/oauthCallback",
+        "VITE_GOOGLE_CLIENT_ID":"1096322555000-lq9ri5tbhn3f4uvv5d8dues6smtnftdd.apps.googleusercontent.com",
+        "VITE_GOOGLE_DRIVE_SCOPE":"https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
+        "VITE_GOOGLE_REDIRECT_URI":"https://rpgwebnexus.pages.dev/oauthCallback"
+      }
+    }
   }
 }
